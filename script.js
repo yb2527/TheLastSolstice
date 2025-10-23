@@ -19,6 +19,8 @@ window.onload = function() {
     let currentPage = 1;
     let totalPages = 0;
     let isTransitioning = false;
+    let messages = [];
+    let currentMessageIndex = 0;
 
     const slider = document.querySelector('.carousel-slider');
     const dotsContainer = document.querySelector('.pagination-dots');
@@ -27,6 +29,17 @@ window.onload = function() {
     const sendBtn = document.getElementById('sendBtn');
     const nicknameInput = document.getElementById('nickname');
     const messageInput = document.getElementById('message');
+
+    const modalContainer = document.getElementById('messageModal');
+    const modalOverlay = document.querySelector('.modal-overlay');
+    const closeModalBtn = document.querySelector('.close-btn');
+    const modalPagination = document.querySelector('.modal-pagination');
+    const modalNickname = document.querySelector('.modal-nickname');
+    const modalMessage = document.querySelector('.modal-message');
+    const modalPrevBtn = document.querySelector('.modal-nav.prev');
+    const modalNextBtn = document.querySelector('.modal-nav.next');
+    const modalContent = document.querySelector('.modal-content');
+    const contentWrapper = document.querySelector('.content-wrapper');
 
     // --- 2. 핵심 기능 함수들을 정의합니다. ---
 
@@ -58,17 +71,15 @@ window.onload = function() {
     function fetchMessagesAndBuildCarousel(pageToShow = 'first') {
         db.collection("messages").orderBy("timestamp", "asc").get()
             .then((snapshot) => {
-                const messages = snapshot.docs.map(doc => doc.data());
+                messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 totalPages = Math.ceil(messages.length / 10);
                 
                 buildCarouselDOM(messages);
                 
                 let targetPage;
-                if (pageToShow === 'last') {
-                    // 'last'가 들어오면 마지막 페이지로 설정
+                if (pageToShow === 'last') { // 페이지가 하나뿐일 때는 0, 여러 개일 때는 마지막 페이지 번호
                     targetPage = totalPages > 1 ? totalPages : 0;
-                } else {
-                    // 그 외에는 첫 페이지로 설정
+                } else { // 페이지가 하나뿐일 때는 0, 여러 개일 때는 1
                     targetPage = totalPages > 1 ? 1 : 0;
                 }
                 
@@ -92,10 +103,11 @@ window.onload = function() {
                 const end = start + 10;
                 const pageMessages = messages.slice(start, end);
                 
-                pageMessages.forEach(msg => {
+                pageMessages.forEach((msg, idx) => {
                     const messageDot = document.createElement('div');
                     messageDot.className = 'message-dot';
                     messageDot.textContent = msg.nickname;
+                    messageDot.dataset.index = start + idx;
                     page.appendChild(messageDot);
                 });
                 slider.appendChild(page);
@@ -125,6 +137,40 @@ window.onload = function() {
         }
     }
 
+    // 모달 너비를 동기화
+    function syncModalWidth() {
+        // content-wrapper의 실제 너비를 측정합니다.
+        const wrapperWidth = contentWrapper.offsetWidth;
+        // 모달의 너비를 wrapper의 내부 콘텐츠 너비와 맞춥니다 (좌우 패딩 20px씩 총 40px 제외).
+        modalContent.style.width = `${wrapperWidth - 40}px`;
+    }
+
+    // 모달을 여는 함수
+    function showMessage(index) {
+        if (index < 0 || index >= messages.length) return;
+        
+        currentMessageIndex = index;
+        const messageData = messages[currentMessageIndex];
+
+        modalPagination.textContent = `${currentMessageIndex + 1} / ${messages.length}`;
+        modalNickname.textContent = messageData.nickname;
+        modalMessage.textContent = messageData.message;
+
+        // 모달을 열기 전에 너비를 먼저 맞춥니다.
+        syncModalWidth();
+        modalContainer.classList.remove('hidden');
+
+        // 창 크기가 변경될 때마다 너비를 다시 맞추도록 이벤트 리스너를 추가합니다.
+        window.addEventListener('resize', syncModalWidth);
+    }
+
+    // 모달을 닫는 함수
+    function closeModal() {
+        modalContainer.classList.add('hidden');
+        // 모달이 닫히면 더 이상 필요 없는 resize 이벤트 리스너를 제거합니다. (성능 최적화)
+        window.removeEventListener('resize', syncModalWidth);
+    }
+
     // --- 3. 이벤트 리스너를 딱 한 번만 등록합니다. ---
 
     // 입력창 활성화 로직
@@ -144,7 +190,6 @@ window.onload = function() {
             nicknameInput.value = '';
             messageInput.value = '';
             checkInputs();
-            fetchMessagesAndBuildCarousel(); // 데이터 새로고침
             fetchMessagesAndBuildCarousel('last');
         }).catch((error) => console.error("메시지 저장 실패: ", error));
     };
@@ -162,6 +207,29 @@ window.onload = function() {
         if (currentPage === totalPages + 1) {
             goToPage(1, false); // 애니메이션 없이 첫 페이지로
         }
+    });
+
+    // 모달 열기 (이벤트 위임 사용)
+    slider.addEventListener('click', function(event) {
+        // 클릭된 요소가 .message-dot일 경우에만 실행
+        if (event.target.classList.contains('message-dot')) {
+            const index = parseInt(event.target.dataset.index, 10);
+            showMessage(index);
+        }
+    });
+
+    // 모달 닫기
+    closeModalBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', closeModal);
+
+    // 모달 내비게이션
+    modalPrevBtn.addEventListener('click', () => {
+        const prevIndex = (currentMessageIndex - 1 + messages.length) % messages.length;
+        showMessage(prevIndex);
+    });
+    modalNextBtn.addEventListener('click', () => {
+        const nextIndex = (currentMessageIndex + 1) % messages.length;
+        showMessage(nextIndex);
     });
 
     // --- 4. 최초 실행 ---
