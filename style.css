@@ -69,7 +69,7 @@ body {
 .navbar {
     width: auto;
     position: sticky;
-    top: 0;
+    top: 0px;
     z-index: 1020;
     background-color: white;
 }
