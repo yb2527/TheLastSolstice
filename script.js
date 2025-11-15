@@ -12,7 +12,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-
 window.onload = function() {
     
     // --- 1. 캐러셀 상태와 HTML 요소를 먼저 정의합니다. ---
@@ -89,29 +88,92 @@ window.onload = function() {
             .catch((error) => console.error("메시지 불러오기 실패: ", error));
     }
 
+    // 메시지 위치 좌표
+    const messageDotPositions = [
+        { top: '38%', left: '40.8%' }, // 0번 메시지
+        { top: '41%', left: '25%', labelPosition: 'top'  }, // 1번 메시지
+        { top: '50%', left: '17%', labelPosition: 'top' }, // 2번 메시지
+        { top: '56.2%', left: '25%' }, // 3번 메시지
+        { top: '56.2%', left: '40.8%' }, // 4번 메시지
+        { top: '56.2%', left: '55%' }, // 5번 메시지
+        { top: '56.2%', left: '69%' }, // 6번 메시지
+        { top: '50%', left: '75%', labelPosition: 'top' }, // 7번 메시지
+        { top: '56.2%', left: '84%' }, // 8번 메시지
+        { top: '70%', left: '40.8%' }, // 9번 메시지
+    ];
+
     // 실제 HTML 요소를 만드는 역할만 하는 함수
     function buildCarouselDOM(messages) {
         slider.innerHTML = '';
         dotsContainer.innerHTML = '';
 
-        if (totalPages > 0) {
-            // 페이지와 메시지 버튼 생성
-            for (let i = 0; i < totalPages; i++) {
-                const page = document.createElement('div');
-                page.className = 'carousel-page';
-                const start = i * 10;
-                const end = start + 10;
-                const pageMessages = messages.slice(start, end);
-                
-                pageMessages.forEach((msg, idx) => {
-                    const messageDot = document.createElement('div');
-                    messageDot.className = 'message-dot';
-                    messageDot.textContent = msg.nickname;
-                    messageDot.dataset.index = start + idx;
-                    page.appendChild(messageDot);
+        const pagesToCreate = (totalPages > 0) ? totalPages : 1;
+
+    if (pagesToCreate > 0) {
+        // 페이지와 메시지 버튼 생성
+        for (let i = 0; i < pagesToCreate; i++) {
+            const page = document.createElement('div');
+            page.className = 'carousel-page';
+
+            const backgroundImageWrapper = document.createElement('div');
+            backgroundImageWrapper.className = 'background-image-wrapper';
+            
+            const backgroundImage = document.createElement('img');
+            backgroundImage.src = 'images/bg.png';
+            backgroundImage.alt = '배경 이미지';
+            backgroundImage.className = 'carousel-background-image';
+            backgroundImageWrapper.appendChild(backgroundImage);
+            
+            page.appendChild(backgroundImageWrapper);
+
+            const start = i * 10;
+            const end = start + 10;
+            const pageMessages = messages.slice(start, end);
+            
+            pageMessages.forEach((msg, idx) => {
+                const messageWrapper = document.createElement('div');
+                messageWrapper.className = 'message-icon-wrapper';
+
+                const absoluteIndex = start + idx;
+                messageWrapper.dataset.index = absoluteIndex;
+
+                const positionIndex = absoluteIndex % messageDotPositions.length; 
+                const positionInfo = messageDotPositions[positionIndex] || { top: '50%', left: '50%', labelPosition: 'bottom' };
+
+                if (positionInfo.labelPosition === 'top') {
+                    messageWrapper.classList.add('label-above');
+                }
+
+                // 아이콘 이미지 생성
+                const messageIcon = document.createElement('img');
+                messageIcon.src = 'images/Vector (1).svg';
+                messageIcon.dataset.hoverSrc = 'images/Vector (2).svg';
+                messageIcon.alt = msg.nickname;
+                messageIcon.className = 'message-icon';
+
+                // 마우스 오버 이벤트 추가
+                messageWrapper.addEventListener('mouseenter', () => {
+                    messageIcon.src = messageIcon.dataset.hoverSrc;
                 });
-                slider.appendChild(page);
-            }
+                messageWrapper.addEventListener('mouseleave', () => {
+                    messageIcon.src = 'images/Vector (1).svg'; // 기본 이미지로 되돌리기
+                });
+
+                // 닉네임 라벨 생성
+                const nicknameLabel = document.createElement('span');
+                nicknameLabel.className = 'nickname-label';
+                nicknameLabel.textContent = msg.nickname;
+
+                messageWrapper.appendChild(messageIcon);
+                messageWrapper.appendChild(nicknameLabel);
+
+                messageWrapper.style.top = positionInfo.top;
+                messageWrapper.style.left = positionInfo.left;
+
+                backgroundImageWrapper.appendChild(messageWrapper);
+            });
+            slider.appendChild(page);
+        }
 
             // 무한 슬라이드를 위한 클론 생성
             if (totalPages > 1) {
@@ -211,9 +273,10 @@ window.onload = function() {
 
     // 모달 열기 (이벤트 위임 사용)
     slider.addEventListener('click', function(event) {
-        // 클릭된 요소가 .message-dot일 경우에만 실행
-        if (event.target.classList.contains('message-dot')) {
-            const index = parseInt(event.target.dataset.index, 10);
+        const wrapper = event.target.closest('.message-icon-wrapper');
+
+        if (wrapper) {
+            const index = parseInt(wrapper.dataset.index, 10);
             showMessage(index);
         }
     });
@@ -235,3 +298,4 @@ window.onload = function() {
     // --- 4. 최초 실행 ---
     fetchMessagesAndBuildCarousel();
 };
+
