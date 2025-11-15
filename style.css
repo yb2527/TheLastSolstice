@@ -67,16 +67,12 @@ body {
 
 /* 내비게이션 영역 */
 .navbar {
-<<<<<<< HEAD
-    position: absolute;
+    width: auto;
+    position: sticky;
+    left: 0;
     top: 0px;
     left: 0;
     right: 0;
-=======
->>>>>>> 256fa6cf945e31cb057e5b544a56abe105790b09
-    width: auto;
-    position: sticky;
-    top: 0px;
     z-index: 1020;
     background-color: white;
 }
