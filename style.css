@@ -67,13 +67,10 @@ body {
 
 /* 내비게이션 영역 */
 .navbar {
-<<<<<<< HEAD
     position: absolute;
     top: 0px;
     left: 0;
     right: 0;
-=======
->>>>>>> 256fa6cf945e31cb057e5b544a56abe105790b09
     width: auto;
     position: sticky;
     top: 0px;
@@ -390,11 +387,6 @@ hr {
 }
 
 .modal-nav:hover {
-<<<<<<< HEAD
     background-color: transparent;
     opacity: 0.7;
 }
-=======
-    background-color: #f0f0f0;
-}
->>>>>>> 256fa6cf945e31cb057e5b544a56abe105790b09
