@@ -68,112 +68,140 @@ window.onload = function() {
 
     // DB에서 데이터를 가져와 캐러셀을 그리는 함수
     function fetchMessagesAndBuildCarousel(pageToShow = 'first') {
-        db.collection("messages").orderBy("timestamp", "asc").get()
+        db.collection("messages").get() 
             .then((snapshot) => {
+                // 데이터를 가져와서 messages 변수에 저장 (timestamp가 있으면 그걸로 정렬)
                 messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // 자바스크립트에서 직접 정렬
+                messages.sort((a, b) => {
+                    const timeA = a.timestamp ? a.timestamp.seconds : 0;
+                    const timeB = b.timestamp ? b.timestamp.seconds : 0;
+                    return timeA - timeB; // 오름차순 (옛날 -> 최신)
+                });
+
                 totalPages = Math.ceil(messages.length / 10);
                 
+                // 화면 그리기
                 buildCarouselDOM(messages);
                 
+                // 페이지 이동
                 let targetPage;
-                if (pageToShow === 'last') { // 페이지가 하나뿐일 때는 0, 여러 개일 때는 마지막 페이지 번호
+                if (pageToShow === 'last') {
                     targetPage = totalPages > 1 ? totalPages : 0;
-                } else { // 페이지가 하나뿐일 때는 0, 여러 개일 때는 1
+                } else {
                     targetPage = totalPages > 1 ? 1 : 0;
                 }
-                
-                // 애니메이션 없이 해당 페이지로 바로 이동
                 goToPage(targetPage, false);
             })
-            .catch((error) => console.error("메시지 불러오기 실패: ", error));
+            .catch((error) => {
+                console.error("메시지 불러오기 실패: ", error);
+                // 에러가 나더라도 배경 화면은 뜨게 함
+                buildCarouselDOM([]); 
+            });
     }
 
     // 메시지 위치 좌표
     const messageDotPositions = [
-        { top: '38%', left: '40.8%' }, // 0번 메시지
-        { top: '41%', left: '25%', labelPosition: 'top'  }, // 1번 메시지
-        { top: '50%', left: '17%', labelPosition: 'top' }, // 2번 메시지
-        { top: '56.2%', left: '25%' }, // 3번 메시지
-        { top: '56.2%', left: '40.8%' }, // 4번 메시지
-        { top: '56.2%', left: '55%' }, // 5번 메시지
-        { top: '56.2%', left: '69%' }, // 6번 메시지
-        { top: '50%', left: '75%', labelPosition: 'top' }, // 7번 메시지
-        { top: '56.2%', left: '84%' }, // 8번 메시지
-        { top: '70%', left: '40.8%' }, // 9번 메시지
+        { top: '35%', left: '40.1%' }, // 0번 메시지
+        { top: '38%', left: '23%', labelPosition: 'top'  }, // 1번 메시지
+        { top: '48.5%', left: '13%', labelPosition: 'top' }, // 2번 메시지
+        { top: '53.5%', left: '23%' }, // 3번 메시지
+        { top: '53.5%', left: '40.1%' }, // 4번 메시지
+        { top: '53.5%', left: '55%' }, // 5번 메시지
+        { top: '53.5%', left: '73%' }, // 6번 메시지
+        { top: '48.5%', left: '79.5%', labelPosition: 'top' }, // 7번 메시지
+        { top: '53%', left: '89.6%' }, // 8번 메시지
+        { top: '68%', left: '40.1%' }, // 9번 메시지
     ];
 
     // 실제 HTML 요소를 만드는 역할만 하는 함수
-    function buildCarouselDOM(messages) {
+    function buildCarouselDOM(messages) { // 여기서 'messages'라는 이름으로 받음
         slider.innerHTML = '';
         dotsContainer.innerHTML = '';
 
         const pagesToCreate = (totalPages > 0) ? totalPages : 1;
 
-    if (pagesToCreate > 0) {
-        // 페이지와 메시지 버튼 생성
-        for (let i = 0; i < pagesToCreate; i++) {
-            const page = document.createElement('div');
-            page.className = 'carousel-page';
+        if (pagesToCreate > 0) {
+            // 페이지와 메시지 버튼 생성
+            for (let i = 0; i < pagesToCreate; i++) {
+                const page = document.createElement('div');
+                page.className = 'carousel-page';
 
-            const backgroundImageWrapper = document.createElement('div');
-            backgroundImageWrapper.className = 'background-image-wrapper';
-            
-            const backgroundImage = document.createElement('img');
-            backgroundImage.src = 'images/bg.png';
-            backgroundImage.alt = '배경 이미지';
-            backgroundImage.className = 'carousel-background-image';
-            backgroundImageWrapper.appendChild(backgroundImage);
-            
-            page.appendChild(backgroundImageWrapper);
-
-            const start = i * 10;
-            const end = start + 10;
-            const pageMessages = messages.slice(start, end);
-            
-            pageMessages.forEach((msg, idx) => {
-                const messageWrapper = document.createElement('div');
-                messageWrapper.className = 'message-icon-wrapper';
-
-                const absoluteIndex = start + idx;
-                messageWrapper.dataset.index = absoluteIndex;
-
-                const positionIndex = absoluteIndex % messageDotPositions.length; 
-                const positionInfo = messageDotPositions[positionIndex] || { top: '50%', left: '50%', labelPosition: 'bottom' };
-
-                if (positionInfo.labelPosition === 'top') {
-                    messageWrapper.classList.add('label-above');
+                const backgroundImageWrapper = document.createElement('div');
+                backgroundImageWrapper.className = 'background-image-wrapper';
+                
+                const backgroundImage = document.createElement('img');
+                backgroundImage.src = 'images/bg.png';
+                backgroundImage.alt = '배경 이미지';
+                backgroundImage.className = 'carousel-background-image';
+                backgroundImageWrapper.appendChild(backgroundImage);
+                
+                if (messages.length === 0) {
+                    const emptyMessage = document.createElement('div');
+                    emptyMessage.textContent = "아직 작성된 메시지가 없어요.\n첫 번째 주인공이 되어보세요! 🥳";
+                    emptyMessage.style.position = 'absolute';
+                    emptyMessage.style.top = '50%';
+                    emptyMessage.style.left = '50%';
+                    emptyMessage.style.transform = 'translate(-50%, -50%)';
+                    emptyMessage.style.textAlign = 'center';
+                    emptyMessage.style.color = '#000000ff';
+                    emptyMessage.style.fontSize = '0.8rem';
+                    emptyMessage.style.zIndex = '5';
+    
+                    backgroundImageWrapper.appendChild(emptyMessage);
                 }
+            
+                page.appendChild(backgroundImageWrapper);
 
-                // 아이콘 이미지 생성
-                const messageIcon = document.createElement('img');
-                messageIcon.src = 'images/Vector (1).svg';
-                messageIcon.dataset.hoverSrc = 'images/Vector (2).svg';
-                messageIcon.alt = msg.nickname;
-                messageIcon.className = 'message-icon';
+                const start = i * 10;
+                const end = start + 10;
+                const pageMessages = messages.slice(start, end);
+                
+                pageMessages.forEach((msg, idx) => {
+                    const messageWrapper = document.createElement('div');
+                    messageWrapper.className = 'message-icon-wrapper';
 
-                // 마우스 오버 이벤트 추가
-                messageWrapper.addEventListener('mouseenter', () => {
-                    messageIcon.src = messageIcon.dataset.hoverSrc;
+                    const absoluteIndex = start + idx;
+                    messageWrapper.dataset.index = absoluteIndex;
+
+                    const positionIndex = absoluteIndex % messageDotPositions.length; 
+                    const positionInfo = messageDotPositions[positionIndex] || { top: '50%', left: '50%', labelPosition: 'bottom' };
+
+                    if (positionInfo.labelPosition === 'top') {
+                        messageWrapper.classList.add('label-above');
+                    }
+
+                    // 아이콘 이미지 생성
+                    const messageIcon = document.createElement('img');
+                    messageIcon.src = 'images/Vector (1).svg';
+                    messageIcon.dataset.hoverSrc = 'images/Vector (2).svg';
+                    messageIcon.alt = msg.nickname;
+                    messageIcon.className = 'message-icon';
+
+                    // 마우스 오버 이벤트 추가
+                    messageWrapper.addEventListener('mouseenter', () => {
+                        messageIcon.src = messageIcon.dataset.hoverSrc;
+                    });
+                    messageWrapper.addEventListener('mouseleave', () => {
+                        messageIcon.src = 'images/Vector (1).svg'; // 기본 이미지로 되돌리기
+                    });
+
+                    // 닉네임 라벨 생성
+                    const nicknameLabel = document.createElement('span');
+                    nicknameLabel.className = 'nickname-label';
+                    nicknameLabel.textContent = msg.nickname;
+
+                    messageWrapper.appendChild(messageIcon);
+                    messageWrapper.appendChild(nicknameLabel);
+
+                    messageWrapper.style.top = positionInfo.top;
+                    messageWrapper.style.left = positionInfo.left;
+
+                    backgroundImageWrapper.appendChild(messageWrapper);
                 });
-                messageWrapper.addEventListener('mouseleave', () => {
-                    messageIcon.src = 'images/Vector (1).svg'; // 기본 이미지로 되돌리기
-                });
-
-                // 닉네임 라벨 생성
-                const nicknameLabel = document.createElement('span');
-                nicknameLabel.className = 'nickname-label';
-                nicknameLabel.textContent = msg.nickname;
-
-                messageWrapper.appendChild(messageIcon);
-                messageWrapper.appendChild(nicknameLabel);
-
-                messageWrapper.style.top = positionInfo.top;
-                messageWrapper.style.left = positionInfo.left;
-
-                backgroundImageWrapper.appendChild(messageWrapper);
-            });
-            slider.appendChild(page);
-        }
+                slider.appendChild(page);
+            }
 
             // 무한 슬라이드를 위한 클론 생성
             if (totalPages > 1) {
@@ -263,6 +291,10 @@ window.onload = function() {
     // 슬라이드 애니메이션이 끝난 후 처리 (무한루프 핵심)
     slider.addEventListener('transitionend', () => {
         isTransitioning = false;
+
+        // 페이지가 1개 이하라면 무한 루프 로직을 실행하지 않고 종료
+        if (totalPages <= 1) return;
+
         if (currentPage === 0) {
             goToPage(totalPages, false); // 애니메이션 없이 마지막 페이지로
         }
@@ -294,6 +326,50 @@ window.onload = function() {
         const nextIndex = (currentMessageIndex + 1) % messages.length;
         showMessage(nextIndex);
     });
+
+
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const minSwipeDistance = 50; // 최소 50px 이상 움직여야 슬라이드로 인정
+
+    // 터치 시작 (손가락 닿음 / 마우스 누름)
+    slider.addEventListener('touchstart', e => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    slider.addEventListener('mousedown', e => {
+        touchStartX = e.screenX;
+    });
+
+    // 터치 끝 (손가락 뗌 / 마우스 뗌)
+    slider.addEventListener('touchend', e => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    slider.addEventListener('mouseup', e => {
+        touchEndX = e.screenX;
+        handleSwipe();
+    });
+
+    // 스와이프 방향 계산 및 페이지 이동 함수
+    function handleSwipe() {
+        // 페이지가 1개 이하라면 스와이프 동작 무시
+        if (totalPages <= 1) return;
+
+        const distance = touchStartX - touchEndX;
+
+        // 이동 거리가 너무 짧으면 무시
+        if (Math.abs(distance) < minSwipeDistance) return;
+
+        if (distance > 0) {
+            // 오른쪽에서 왼쪽으로 드래그 (다음 페이지)
+            goToPage(currentPage + 1);
+        } else {
+            // 왼쪽에서 오른쪽으로 드래그 (이전 페이지)
+            goToPage(currentPage - 1);
+        }
+    }
 
     // --- 4. 최초 실행 ---
     fetchMessagesAndBuildCarousel();
