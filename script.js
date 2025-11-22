@@ -112,7 +112,7 @@ window.onload = function() {
         { top: '53.5%', left: '73%' }, // 6번 메시지
         { top: '48%', left: '79.5%', labelPosition: 'top' }, // 7번 메시지
         { top: '54%', left: '89.6%' }, // 8번 메시지
-        { top: '70%', left: '40.1%' }, // 9번 메시지
+        { top: '70.5%', left: '40.1%' }, // 9번 메시지
     ];
 
     // 실제 HTML 요소를 만드는 역할만 하는 함수
