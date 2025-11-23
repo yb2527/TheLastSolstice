@@ -13,7 +13,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 window.onload = function() {
-    
     // --- 1. 캐러셀 상태와 HTML 요소를 먼저 정의합니다. ---
     let currentPage = 1;
     let totalPages = 0;
