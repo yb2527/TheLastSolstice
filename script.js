@@ -115,11 +115,8 @@ window.onload = function() {
         { top: '70.5%', left: '40.1%' }, // 9번 메시지
     ];
 
-
     // 실제 HTML 요소를 만드는 역할만 하는 함수
-    function buildCarouselDOM(messages) {
-        slider.style.transition = 'none';
-        slider.style.transform = 'translateX(0px);
+    function buildCarouselDOM(messages) { // 여기서 'messages'라는 이름으로 받음
         slider.innerHTML = '';
         dotsContainer.innerHTML = '';
 
