@@ -221,6 +221,10 @@ input, textarea {
     padding: 10px;
     box-sizing: border-box;
     position: relative; 
+
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
 }
 
 .background-image-wrapper {

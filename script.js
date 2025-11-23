@@ -116,7 +116,11 @@ window.onload = function() {
     ];
 
     // 실제 HTML 요소를 만드는 역할만 하는 함수
-    function buildCarouselDOM(messages) { // 여기서 'messages'라는 이름으로 받음
+    function buildCarouselDOM(messages) {
+        slider.style.transition = 'none';
+        slider.style.transform = 'translateX(0px)';
+
+        // 기존 내용 삭제
         slider.innerHTML = '';
         dotsContainer.innerHTML = '';
 
