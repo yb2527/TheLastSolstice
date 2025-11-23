@@ -451,3 +451,17 @@ hr {
     background-color: transparent;
     opacity: 0.7;
 }
+
+.ByeMySummer {
+    width: 100%;
+    height: auto;
+    margin: auto;
+}
+
+.last-text {
+    font-size: 12px !important; 
+    color: #767676;
+    text-align: center;
+    font-family: 'NexonWarhaven', sans-serif, !important;
+    font-weight: 400 !important;
+}
