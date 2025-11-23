@@ -378,4 +378,3 @@ window.onload = function() {
     // --- 4. 최초 실행 ---
     fetchMessagesAndBuildCarousel();
 };
-
